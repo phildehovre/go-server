@@ -43,17 +43,17 @@ func WriteJSON(w io.Writer, player Player) error {
 }
 
 func (p *PlayerServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	playerName := strings.TrimPrefix(r.URL.Path, "/players/")
 	switch r.Method {
 	case http.MethodPost:
-		p.processWin(w, r)
+		p.processWin(w, playerName)
 	case http.MethodGet:
-		p.showScore(w, r)
+		p.showScore(w, playerName)
 	}
 
 }
 
-func (p *PlayerServer) showScore(w http.ResponseWriter, r *http.Request) {
-	playerName := strings.TrimPrefix(r.URL.Path, "/players/")
+func (p *PlayerServer) showScore(w http.ResponseWriter, playerName string) {
 
 	score := p.store.GetPlayerScore(playerName)
 
@@ -65,8 +65,7 @@ func (p *PlayerServer) showScore(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func (p *PlayerServer) processWin(w http.ResponseWriter, r *http.Request) {
-	playerName := strings.TrimPrefix(r.URL.Path, "/players/")
+func (p *PlayerServer) processWin(w http.ResponseWriter, playerName string) {
 	p.store.RecordWin(playerName)
 	w.WriteHeader(http.StatusAccepted)
 
