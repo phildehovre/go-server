@@ -12,7 +12,6 @@ const jsonContentType = "application/json"
 type PlayerStore interface {
 	GetPlayerScore(string) int
 	RecordWin(string)
-	GetLeague() []Player
 }
 
 type PlayerServer struct {
@@ -24,15 +23,6 @@ type Player struct {
 	Name string `json:"name"`
 	Wins int    `json:"wins"`
 }
-
-// func WriteJSON(w io.Writer, player Player) error {
-// 	jsonData, err := json.Marshal(player)
-// 	if err != nil {
-// 		return err
-// 	}
-// 	w.Write(jsonData)
-// 	return nil
-// }
 
 func NewPlayerServer(store PlayerStore) *PlayerServer {
 	p := new(PlayerServer)
@@ -53,9 +43,8 @@ func (p *PlayerServer) leagueHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
-func (p *PlayerServer) GetLeague() []Player {
-
-	return []Player{
+func (p *PlayerServer) GetLeague() League {
+	return League{
 		{"Cleo", 32},
 		{"Chris", 20},
 		{"Tiest", 14},
@@ -91,5 +80,9 @@ func (p *PlayerServer) processWin(w http.ResponseWriter, playerName string) {
 }
 
 func (s *PlayerServer) RecordWin(name string) {
-
+	players := s.GetLeague()
+	for _, p := range players {
+		fmt.Println(p.Name)
+		fmt.Println(p.Wins)
+	}
 }
