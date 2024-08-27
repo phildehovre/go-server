@@ -3,46 +3,66 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 	"strings"
 )
 
-type Player struct {
-	Name  string `json: "name"`
-	Score int    `json: "score"`
-}
-
-var players = []Player{
-	{
-		Name:  "Pepper",
-		Score: 20,
-	},
-	{
-		Name:  "Floyd",
-		Score: 15,
-	},
-}
+const jsonContentType = "application/json"
 
 type PlayerStore interface {
 	GetPlayerScore(string) int
 	RecordWin(string)
+	GetLeague() []Player
 }
 
 type PlayerServer struct {
 	store PlayerStore
+	http.Handler
 }
 
-func WriteJSON(w io.Writer, player Player) error {
-	jsonData, err := json.Marshal(player)
-	if err != nil {
-		return err
+type Player struct {
+	Name string `json:"name"`
+	Wins int    `json:"wins"`
+}
+
+// func WriteJSON(w io.Writer, player Player) error {
+// 	jsonData, err := json.Marshal(player)
+// 	if err != nil {
+// 		return err
+// 	}
+// 	w.Write(jsonData)
+// 	return nil
+// }
+
+func NewPlayerServer(store PlayerStore) *PlayerServer {
+	p := new(PlayerServer)
+	p.store = store
+
+	router := http.NewServeMux()
+	router.Handle("/league", http.HandlerFunc(p.leagueHandler))
+	router.Handle("/players/", http.HandlerFunc(p.playersHandler))
+
+	p.Handler = router
+
+	return p
+}
+
+func (p *PlayerServer) leagueHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("content-type", jsonContentType)
+	json.NewEncoder(w).Encode(p.GetLeague())
+	w.WriteHeader(http.StatusOK)
+}
+
+func (p *PlayerServer) GetLeague() []Player {
+
+	return []Player{
+		{"Cleo", 32},
+		{"Chris", 20},
+		{"Tiest", 14},
 	}
-	w.Write(jsonData)
-	return nil
 }
 
-func (p *PlayerServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (p *PlayerServer) playersHandler(w http.ResponseWriter, r *http.Request) {
 	playerName := strings.TrimPrefix(r.URL.Path, "/players/")
 	switch r.Method {
 	case http.MethodPost:
@@ -50,7 +70,6 @@ func (p *PlayerServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	case http.MethodGet:
 		p.showScore(w, playerName)
 	}
-
 }
 
 func (p *PlayerServer) showScore(w http.ResponseWriter, playerName string) {
