@@ -1,4 +1,4 @@
-package main
+package poker
 
 import (
 	"encoding/json"
@@ -12,6 +12,7 @@ const jsonContentType = "application/json"
 type PlayerStore interface {
 	GetPlayerScore(string) int
 	RecordWin(string)
+	GetLeague() League
 }
 
 type PlayerServer struct {
@@ -39,16 +40,8 @@ func NewPlayerServer(store PlayerStore) *PlayerServer {
 
 func (p *PlayerServer) leagueHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("content-type", jsonContentType)
-	json.NewEncoder(w).Encode(p.GetLeague())
+	json.NewEncoder(w).Encode(p.store.GetLeague())
 	w.WriteHeader(http.StatusOK)
-}
-
-func (p *PlayerServer) GetLeague() League {
-	return League{
-		{"Cleo", 32},
-		{"Chris", 20},
-		{"Tiest", 14},
-	}
 }
 
 func (p *PlayerServer) playersHandler(w http.ResponseWriter, r *http.Request) {
@@ -80,7 +73,7 @@ func (p *PlayerServer) processWin(w http.ResponseWriter, playerName string) {
 }
 
 func (s *PlayerServer) RecordWin(name string) {
-	players := s.GetLeague()
+	players := s.store.GetLeague()
 	for _, p := range players {
 		fmt.Println(p.Name)
 		fmt.Println(p.Wins)
