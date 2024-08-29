@@ -12,7 +12,7 @@ func TestFileSystemStore(t *testing.T) {
 	{"Name": "Chris", "Wins": 33}]`)
 		defer cleanDatabase()
 
-		store := NewFileSystemStore(database)
+		store, err := NewFileSystemStore(database)
 
 		got := store.league
 
@@ -21,6 +21,7 @@ func TestFileSystemStore(t *testing.T) {
 			{"Chris", 33},
 		}
 
+		assertNoError(t, err)
 		assertLeague(t, got, want)
 
 		got2 := store.league
@@ -34,10 +35,11 @@ func TestFileSystemStore(t *testing.T) {
 		]`)
 		defer cleanDatabase()
 
-		store := NewFileSystemStore(database)
+		store, err := NewFileSystemStore(database)
 		got := store.GetPlayerScore("Chris")
 		want := 33
 
+		assertNoError(t, err)
 		assertScoreEquals(t, got, want)
 	})
 	t.Run("store win for existing players", func(t *testing.T) {
@@ -47,12 +49,13 @@ func TestFileSystemStore(t *testing.T) {
 
 		defer cleanDatabase()
 
-		store := NewFileSystemStore(database)
+		store, err := NewFileSystemStore(database)
 		player := "Chris"
 		store.RecordWin(player)
 
 		got := store.GetPlayerScore(player)
 
+		assertNoError(t, err)
 		assertScoreEquals(t, got, 34)
 	})
 	t.Run("store win for existing players", func(t *testing.T) {
@@ -61,12 +64,45 @@ func TestFileSystemStore(t *testing.T) {
 		{"Name": "Chris", "Wins": 33}]`)
 		defer cleanDatabase()
 
-		store := NewFileSystemStore(database)
+		store, err := NewFileSystemStore(database)
 		store.RecordWin("Pepper")
 
 		got := store.GetPlayerScore("Pepper")
 		want := 1
+		assertNoError(t, err)
 		assertScoreEquals(t, got, want)
+	})
+	t.Run("works with an empty file", func(t *testing.T) {
+		database, cleanDatabase := createTempFile(t, "")
+		defer cleanDatabase()
+
+		_, err := NewFileSystemStore(database)
+
+		assertNoError(t, err)
+	})
+	t.Run("league sorted", func(t *testing.T) {
+		database, cleanDatabase := createTempFile(t, `[
+			{"Name": "Cleo", "Wins": 10},
+			{"Name": "Chris", "Wins": 33}
+		]`)
+
+		defer cleanDatabase()
+
+		store, err := NewFileSystemStore(database)
+
+		assertNoError(t, err)
+
+		got := store.GetLeague()
+
+		want := League{
+			{"Chris", 33},
+			{"Cleo", 10},
+		}
+
+		assertLeague(t, got, want)
+
+		got = store.GetLeague()
+		assertLeague(t, got, want)
 	})
 }
 
@@ -94,4 +130,12 @@ func assertScoreEquals(t *testing.T, got, want int) {
 	if got != want {
 		t.Errorf("incorrect score: got %d, want %d", got, want)
 	}
+}
+
+func assertNoError(t testing.TB, got error) {
+	t.Helper()
+	if got != nil {
+		t.Fatalf("did not expect an error but got one %v", got)
+	}
+
 }
