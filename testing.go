@@ -34,7 +34,7 @@ func AssertPlayerWin(t testing.TB, store *StubPlayerStore, winner string) {
 	t.Helper()
 
 	if len(store.winCalls) != 1 {
-		t.Fatalf("got %d calls to RecordWin want %d", len(store.winCalls), winner)
+		t.Fatalf("got %d calls to RecordWin want %s", len(store.winCalls), winner)
 	}
 
 	if store.winCalls[0] != winner {
