@@ -3,24 +3,22 @@ package main
 import (
 	"fmt"
 	"log"
+	"net/http"
 	"os"
 
 	poker "github.com/phildehovre/go-server"
 )
 
-const dbFileName = "game.db.json"
-
 func main() {
-	fmt.Println("Let's play poker")
-	fmt.Println("Type {Name} wins to record a win")
+	fmt.Println("helloe world")
 
-	store, close, err := poker.FileSystemPlayerStoreFromFile(dbFileName)
+	file, _ := os.Open("game.db.json")
+	store, err := poker.NewFileSystemStore(file)
+	server := poker.NewPlayerServer(store)
 
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("no file was found")
 	}
-	defer close()
 
-	game := poker.NewCLI(store, os.Stdin, os.Stdout, poker.BlindAlerterFunc(poker.StdOutAlerter))
-	game.PlayPoker()
+	log.Fatal(http.ListenAndServe(":5000", server))
 }
